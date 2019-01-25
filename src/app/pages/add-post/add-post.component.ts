@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable, from, of } from 'rxjs';
 import { map, startWith, delay } from 'rxjs/operators';
 import { Upload } from 'src/app/shared/models/upload';
-
+import { Post } from 'src/app/shared/models/post';
 import { UploadsService } from '../../shared/services/uploads.service';
 
 @Component({
@@ -12,7 +12,7 @@ import { UploadsService } from '../../shared/services/uploads.service';
   styleUrls: ['./add-post.component.scss']
 })
 export class AddPostComponent implements OnInit {
-
+post : Post 
   form: FormGroup = this.fb.group({
     title: ['', Validators.required],
     description: ['', Validators.required],
@@ -33,11 +33,12 @@ export class AddPostComponent implements OnInit {
    bufferValue = 75;
 
   filesCount = 0;
-
+  progress: {percentage: number} = {percentage: 0}
   constructor(
     private fb: FormBuilder,
     private upSvc: UploadsService
   ) {
+
   }
 
   ngOnInit() {
@@ -55,7 +56,10 @@ export class AddPostComponent implements OnInit {
   }
 
   submit() {
-  }
+       this.post = new Post(this.form.controls.title.value,this.form.controls.category.value,this.form.controls.description.value,this.form.controls.city.value)
+       this.post.imagesUrls= new Array()
+       this.upload()
+      }
 
   private _filter(value: string, options: string[]  ): string[] {
     const filterValue = value.toLowerCase();
@@ -71,7 +75,7 @@ export class AddPostComponent implements OnInit {
   uploadSingle() {
     const file = this.selectedFiles.item(0);
     this.currentUpload = new Upload(file);
-    this.upSvc.pushUpload(this.currentUpload);
+    //this.upSvc.pushUpload(this.currentUpload);
   }
 
   uploadMulti() {
@@ -106,6 +110,18 @@ record() {
 
   Fullscreen.toggleFullscreen();
 
+}
+upload() {
+  let i :number
+  let file ;
+  for(i=0;i< this.selectedFiles.length;i++)
+  {   
+      file = this.selectedFiles[i];
+      this.currentUpload = new Upload(file);
+      this.upSvc.pushFileToStorage(this.currentUpload, this.progress,this.post )
+  }
+  //this.uploadService.saveFilesData();
+  //this.uploadService.pushFilesToStorage(this.selectedFiles, this.progress )
 }
 
 }

@@ -8,7 +8,9 @@ import { LoadingService } from 'src/app/shared/services/loading.service';
 import { map, startWith } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { PolicyComponent } from 'src/app/layouts/bottomSheet/policy/policy.component';
-
+import { Upload } from 'src/app/shared/models/upload';
+import {UploadsService} from '../../shared/services/uploads.service';
+import {User} from 'src/app/shared/models/user'; 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
@@ -34,17 +36,24 @@ export class RegisterComponent implements OnInit {
     password: ['', Validators.compose([ Validators.required, Validators.minLength(8), Validators.maxLength(20)]) ],
     policy: ['', Validators.pattern('true')]
   });
-
+   private file 
   imagePath: string;
   imgURL = 'assets/images/avatar.png';
   public message: string;
+  selectedFiles: FileList;
+  currentUpload: Upload;
 
+  loadingValue = 0;
+   bufferValue = 75;
+
+  filesCount = 0;
+public f :Upload
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     public dialog: MatDialog,
     private policySheet: MatBottomSheet,
-
+    private uploadService: UploadsService,private upSvc: UploadsService
   ) { }
 
   ngOnInit() {
@@ -70,22 +79,34 @@ export class RegisterComponent implements OnInit {
     reader.readAsDataURL(files[0]);
     reader.onload = (_event) => {
       this.imgURL = String(reader.result);
+     // console.log("url"+this.imgURL)
     };
+    this.file=files[0]
+    //this.uploadprofilimage(files[0])
+        
   }
-
+  
+uploadprofilimage(file, user:User) {// to get urlDownload 
+  this.currentUpload = new Upload(file);
+  //console.log("File name \n "+this.currentUpload.file.name)
+  this.imgURL =this.upSvc.pushFile(this.currentUpload,user)
+  console.log(" this.imgURL "+ this.imgURL)
+    }
+  
   submit() {
 
-    const body = {
-      firstName: this.registerForm.controls.firstName.value,
-      lastName: this.registerForm.controls.lastName.value,
-      birthday: new Date(this.registerForm.controls.birthday.value),
-      gender: this.registerForm.controls.gender.value,
-      city: this.registerForm.controls.city.value,
-      phoneNumber: this.registerForm.controls.phoneNumber.value,
-      email: this.registerForm.controls.email.value,
-      password: this.registerForm.controls.password.value,
-      withMail: !this.registerForm.controls.emailCheck.value
-    };
+    let user = new User(
+      this.registerForm.controls.firstName.value,
+      this.registerForm.controls.lastName.value,
+      new Date(this.registerForm.controls.birthday.value),
+      this.registerForm.controls.gender.value,
+      this.registerForm.controls.city.value,
+      this.registerForm.controls.phoneNumber.value,
+      this.registerForm.controls.email.value,
+      this.registerForm.controls.password.value,
+      this.registerForm.controls.emailCheck.value
+    );
+    this.uploadprofilimage(this.file, user)
 
     LoadingService.on();
     LoadingService.update('Chargement de votre image...', 0);
